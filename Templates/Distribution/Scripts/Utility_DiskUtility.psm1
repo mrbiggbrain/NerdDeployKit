@@ -5,14 +5,29 @@
 # -----------------------------------------------------------
 
 # -----------------------------------------------------------
-# Data Class
+# Include Librarys
+# -----------------------------------------------------------
+using module .\Utility_DiskUtility.psm1
+
+# -----------------------------------------------------------
+# Data Class (Partitions)
 # -----------------------------------------------------------
 class PartitionDetails
 {
     $RecoveryPartition
-    $BootPartition
+    $SystemPartition
     $ReservedPartition
     $OSPartition
+}
+
+# -----------------------------------------------------------
+# Data Class (Filesystems)
+# -----------------------------------------------------------
+class VolumneDetails
+{
+    $RecoveryVolume
+    $SystemVolume
+    $OSVolume
 }
 
 # -----------------------------------------------------------
@@ -21,16 +36,17 @@ class PartitionDetails
 function PartitionDisk
 {
     param(
-        [int] $DiskNumber,
-        [string] $FirmwareType
+        [Parameter(Mandatory=$true)][int] $DiskNumber,
+        [Parameter(Mandatory=$true)][string] $FirmwareType
     )
 
     if($FirmwareType -eq "UEFI") { 
-        PartitionDiskUEFI($DiskNumber) 
+        PartitionDiskUEFI -DiskNumber $DiskNumber
         return
     }
     elseif($FirmwareType -eq "BIOS") {
-        PartitionDiskBIOS($DiskNumber)
+        PartitionDiskBIOS -DiskNumber $DiskNumber
+        return
     }
 }
 
@@ -40,8 +56,11 @@ function PartitionDisk
 function PartitionDiskUEFI
 {
     param(
-        [int] $DiskNumber
+        [Parameter(Mandatory=$true)][int] $DiskNumber
     )
+
+    # Load Drive Mappings
+    $driveMappings = [DriveLetterMappingConfiguration]::LoadDriveLetterMappingConfiguration()
 
     # Generate a class instance to hold our returned data
     $details = [PartitionDetails]::new()
@@ -56,16 +75,16 @@ function PartitionDiskUEFI
     Clear-Disk -Number $DiskNumber -Removedata -Confirm:$false
 
     # Generate EFI partition
-    $details.$BootPartition = New-Partition -DiskNumber $DiskNumber -Size 499MB -DriveLetter E -IsHidden $true -GptType "{c12a7328-f81f-11d2-ba4b-00a0c93ec93b}"
+    $details.SystemPartition = New-Partition -DiskNumber $DiskNumber -Size 499MB -DriveLetter $driveMappings.System
 
     # Generate reserved partition
-    $details.$ReservedPartition = New-Partition -DiskNumber $DiskNumber -Size 16MB -IsHidden $true -GptType "{e3c9e316-0b5c-4db8-817d-f92df00215ae}"
+    $details.ReservedPartition = New-Partition -DiskNumber $DiskNumber -Size 16MB
 
     # Generate OS Partition
-    $details.$OSPartition = New-Partition -DiskNumber $DiskNumber -DriveLetter C -Size $osDiskSize
+    $details.OSPartition = New-Partition -DiskNumber $DiskNumber -DriveLetter $driveMappings.OS -Size $osDiskSize
 
     # Generate recovery partition
-    $details.$RecoveryPartition = New-Partition -DiskNumber $DiskNumber -UseMaximumSize -DriveLetter R -IsHidden $true -GptType "{de94bba4-06d1-4d40-a16a-bfd50179d6ac}"
+    $details.RecoveryPartition = New-Partition -DiskNumber $DiskNumber -UseMaximumSize -DriveLetter $driveMappings.Recovery
 
     # Return details on the partitions
     return $details
@@ -76,5 +95,66 @@ function PartitionDiskUEFI
 # -----------------------------------------------------------
 function PartitionDiskBIOS
 {
+    param(
+        [Parameter(Mandatory=$true)][int] $DiskNumber
+    )
+
+    throw "NDK Does not currently support deploying to BIOS firmware."
+}
+
+# -----------------------------------------------------------
+# Format Partitions
+# -----------------------------------------------------------
+function FormatPartitions
+{
+    param(
+        [Parameter(Mandatory=$true)][PartitionDetails] $PartitionDetails,
+        [Parameter(Mandatory=$true)][string] $FirmwareType
+    )
+
+    if($FirmwareType -eq "UEFI") { 
+        FormatPartitionsUEFI -PartitionDetails $PartitionDetails 
+        return
+    }
+    elseif($FirmwareType -eq "BIOS") {
+        FormatPartitionsBIOS -PartitionDetails $PartitionDetails
+        return
+    }
+}
+
+# -----------------------------------------------------------
+# Format Partitions (UEFI)
+# -----------------------------------------------------------
+function FormatPartitionsUEFI
+{
+    param(
+        [Parameter(Mandatory=$true)][PartitionDetails] $PartitionDetails
+    ) 
+
+    # Generate a new class instance to store results. 
+    $volumes = [VolumneDetails]::new()
+
+    # Recovery 
+    $volumes.RecoveryVolume = $PartitionDetails.RecoveryPartition | Format-Volume -FileSystem NTFS -FileSystemLabel "Recovery"
+
+    # Boot
+    $volumes.SystemVolume = $PartitionDetails.SystemPartition | Format-Volume -FileSystem FAT32 -FileSystemLabel "System"
+
+    # OS
+    $volumes.OSVolume = $PartitionDetails.OSPartition | Format-Volume -FileSystem NTFS -FileSystemLabel "OS"
+
+    # Return results
+    return $volumes
+}
+
+# -----------------------------------------------------------
+# Format Partitions (BIOS)
+# -----------------------------------------------------------
+function FormatPartitionsBIOS
+{
+    param(
+        [Parameter(Mandatory=$true)][PartitionDetails] $PartitionDetails
+    )
+
     throw "NDK Does not currently support deploying to BIOS firmware."
 }

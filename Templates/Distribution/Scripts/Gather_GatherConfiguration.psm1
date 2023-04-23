@@ -4,6 +4,30 @@
 # (C) 2023 Nicholas Young
 # -----------------------------------------------------------
  
+# -----------------------------------------------------------
+# Drive Letter Mapping Config
+# -----------------------------------------------------------
+class DriveLetterMappingConfiguration
+{
+    [DriveLetterMappingConfiguration] static LoadDriveLetterMappingConfiguration()
+    {
+        $mapping = [DriveLetterMappingConfiguration]::new();
+
+        $mapping.OS = "H"
+        $mapping.System = "S"
+        $mapping.Recovery = "R"
+
+        return $mapping
+    }
+
+    $OS
+    $System
+    $Recovery
+}
+
+# -----------------------------------------------------------
+# Master Configuration Class
+# -----------------------------------------------------------
  class Configuration {
 
     # Loads the NDK COnfiguration from the configuration files
@@ -18,13 +42,19 @@
         # Assign the current firmware type to $FirmwareType
         $config.FirmwareType = $env:firmware_type
 
+        # Assign Drive Letter Mappings
+        $config.DriveLetterMappings = [DriveLetterMappingConfiguration]::LoadDriveLetterMappingConfiguration()
+
         # Return the object
         return $config
     }
 
     # Which drive to format and image onto. 
-    [string] $DriveIndex;
+    [string] $DriveIndex
 
     # Firmware Type
-    [string] $FirmwareType;
+    [string] $FirmwareType
+
+    # Drive letter mappings
+    [DriveLetterMappingConfiguration] $DriveLetterMappings
 }
