@@ -17,6 +17,16 @@ using module .\Utility_DiskUtility.psm1
 $Configuration = [Configuration]::LoadNDKConfiguration()
 
 # -----------------------------------------------------------
+# Generate a logger to use
+# -----------------------------------------------------------
+$logger = [Logger]::new()
+
+# -----------------------------------------------------------
+# Generate a program scope to use
+# -----------------------------------------------------------
+$pscope = [ProgramScope]::new()
+
+# -----------------------------------------------------------
 # Grab details about disks on the system
 # -----------------------------------------------------------
 $DiskDetails = Get-Disk
@@ -30,31 +40,12 @@ $ChosenDisk = $DiskDetails | Where-Object {$_.Number -eq $Configuration.DriveInd
 # Verify disk meets requirements
 # -----------------------------------------------------------
 
-# Check if the disk is a Fixed Disk. 
-if($ChosenDisk.ProvisioningType -ne "Fixed")
-{
-    # Log the failure and properly fail the provisioning.
-    $err = "Requested Disk: {Disk Number: $($ChosenDisk.DiskNumber), Model: $($ChosenDisk.Model)} is of type $($ChosenDisk.ProvisioningType) but type FIXED is required."
-    [Logger]::WriteError($err)
-    [ProgramScope]::FailProvision($err)
-}
+$diskVerificationStatus = CheckDiskRequirements -DiskDetails $ChosenDisk
 
-# Check if Disk is Healthy
-if($ChosenDisk.HealthStatus -ne "Healthy")
+if($diskVerificationStatus -ne 0)
 {
-    # Log the failure and properly fail the provisioning.
-    $err = "Requested Disk: {Disk Number: $($ChosenDisk.DiskNumber), Model: $($ChosenDisk.Model)} is not marked as healthy."
-    [Logger]::WriteError($err)
-    [ProgramScope]::FailProvision($err)
-}
-
-# Check if Disk is Online
-if($ChosenDisk.OperationalStatus -ne "Online")
-{
-    # Log the failure and properly fail the provisioning.
-    $err = "Requested Disk: {Disk Number: $($ChosenDisk.DiskNumber), Model: $($ChosenDisk.Model)} is not online."
-    [Logger]::WriteError($err)
-    [ProgramScope]::FailProvision($err)
+    $logger.WriteError("Disk verification failed with code $($diskVerificationStatus).")
+    $pscope.FailProvision("VERIFY_DISK", $diskVerificationStatus)
 }
 
 # -----------------------------------------------------------

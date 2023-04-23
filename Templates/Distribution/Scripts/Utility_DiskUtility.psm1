@@ -158,3 +158,35 @@ function FormatPartitionsBIOS
 
     throw "NDK Does not currently support deploying to BIOS firmware."
 }
+
+# -----------------------------------------------------------
+# Check Disk Requirments
+# -----------------------------------------------------------
+function CheckDiskRequirements
+{
+    param(
+        [Parameter(Mandatory=$true)] $DiskDetails
+    )
+
+    [int] $returnCode = 0
+
+    # Check if the disk is a Fixed Disk. 
+    if($DiskDetails.ProvisioningType -ne "Fixed")
+    {
+        $returnCode += 1
+    }
+
+    # Check if Disk is Healthy
+    if($DiskDetails.HealthStatus -ne "Healthy")
+    {
+        $returnCode += 2
+    }
+
+    # Check if Disk is Online
+    if($ChosenDisk.OperationalStatus -ne "Online")
+    {
+        $returnCode += 4
+    }
+
+    return $returnCode
+}
