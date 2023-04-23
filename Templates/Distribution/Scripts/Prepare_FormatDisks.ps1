@@ -10,6 +10,7 @@
 using module .\Gather_GatherConfiguration.psm1
 using module .\Utility_GenericUtility.psm1
 using module .\Utility_DiskUtility.psm1
+using module .\Scope_Scope.psm1
 
 # -----------------------------------------------------------
 # Generate a Configuration Object
