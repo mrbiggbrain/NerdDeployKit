@@ -7,7 +7,7 @@
 # -----------------------------------------------------------
 # Include Librarys
 # -----------------------------------------------------------
-using module .\Utility_DiskUtility.psm1
+using module .\Gather_GatherConfiguration.psm1
 
 # -----------------------------------------------------------
 # Data Class (Partitions)
