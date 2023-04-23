@@ -58,3 +58,8 @@ $partitionDetails = PartitionDisk -DiskNumber $ChosenDisk.DiskNumber -FirmwareTy
 # -----------------------------------------------------------
 $volumeDetails = FormatPartitions -PartitionDetails $partitionDetails -FirmwareType $Configuration.FirmwareType
 
+# -----------------------------------------------------------
+# Save Deployment State
+# -----------------------------------------------------------
+$pscope.SavePartitions($partitionDetails)
+$pscope.SaveVolumes($volumeDetails)
