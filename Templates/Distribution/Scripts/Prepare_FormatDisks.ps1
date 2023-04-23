@@ -21,11 +21,13 @@ $Configuration = [Configuration]::LoadNDKConfiguration()
 $DiskDetails = Get-Disk
 
 # -----------------------------------------------------------
+# Get the correct disk. 
+# -----------------------------------------------------------
+$ChosenDisk = $DiskDetails | Where-Object {$_.Number -eq $Configuration.DriveIndex}
+
+# -----------------------------------------------------------
 # Verify disk meets requirements
 # -----------------------------------------------------------
-
-# Get the correct disk. 
-$ChosenDisk = $DiskDetails | Where-Object {$_.Number -eq $Configuration.DriveIndex}
 
 # Check if the disk is a Fixed Disk. 
 if($ChosenDisk.ProvisioningType -ne "Fixed")
@@ -64,13 +66,13 @@ clear-disk -number $ChosenDisk.DiskNumber -removedata
 # -----------------------------------------------------------
 
 # Recovery
-$RecoveryPartition = New-Partition -DiskNumber $ChosenDisk.DiskNumber -Size 499MB -DriveLetter R -GptType "{de94bba4-06d1-4d40-a16a-bfd50179d6ac}"
+$RecoveryPartition = New-Partition -DiskNumber $ChosenDisk.DiskNumber -Size 499MB -DriveLetter R -IsHidden $true -GptType "{de94bba4-06d1-4d40-a16a-bfd50179d6ac}"
 
 # EFI
-$BootPartition = New-Partition -DiskNumber $ChosenDisk.DiskNumber -Size 499MB -DriveLetter E  -GptType "{c12a7328-f81f-11d2-ba4b-00a0c93ec93b}"
+$BootPartition = New-Partition -DiskNumber $ChosenDisk.DiskNumber -Size 499MB -DriveLetter E -IsHidden $true -GptType "{c12a7328-f81f-11d2-ba4b-00a0c93ec93b}"
 
 # Reserved
-$ReservedPartition = New-Partition -DiskNumber $ChosenDisk.DiskNumber -Size 16MB -DriveLetter M -GptType "{e3c9e316-0b5c-4db8-817d-f92df00215ae}"
+$ReservedPartition = New-Partition -DiskNumber $ChosenDisk.DiskNumber -Size 16MB -IsHidden $true -GptType "{e3c9e316-0b5c-4db8-817d-f92df00215ae}"
 
 # OS
 $OSPartition = New-Partition -DiskNumber $ChosenDisk.DiskNumber -DriveLetter C -UseMaximumSize
