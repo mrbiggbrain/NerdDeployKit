@@ -1,61 +1,31 @@
 # -----------------------------------------------------------
-# Gather_GenerateDatabase.ps1 - LGenerates an SQLite DB
+# Gather_GenerateDatabase.ps1 - Generates an SQLite DB
 # Nerd Deployment Kit
 # (C) 2023 Nicholas Young
 # -----------------------------------------------------------
 
 # -----------------------------------------------------------
-# Get the base folder for the install.
+# Add external librarys
 # -----------------------------------------------------------
-$BaseDir = (Get-Item $PSScriptRoot).Parent.FullName
+using module .\Database_DataAccess.psm1
 
 # -----------------------------------------------------------
-# Generate a path to BIN
-# -----------------------------------------------------------
-$BinPath = "$($BaseDir)\Bin\$($ENV:PROCESSOR_ARCHITECTURE)"
-
-# -----------------------------------------------------------
-# Generate a path to the SQLite DLL
-# -----------------------------------------------------------
-$DLLPath = "$($BinPath)\sqlite\System.Data.SQLite.dll"
-
-# -----------------------------------------------------------
-# Load the DLL
+# Load SQLite DLL
 # -----------------------------------------------------------
 Write-Host "[I] Loading SQLite Assembly." -ForegroundColor Yellow
-
-[Reflection.Assembly]::LoadFile($DLLPath) | Out-Null
-
-# -----------------------------------------------------------
-# Get proposed database folder
-# -----------------------------------------------------------
-$DBFolder = "$($env:SystemDrive)\NDK"
+SQLiteDB.LoadModule;
 
 # -----------------------------------------------------------
-# Get proposed database file
-# -----------------------------------------------------------
-$DBFile = "$DBFolder\Deploy.sqlite"
-
-# -----------------------------------------------------------
-# Generate Database Folder
-# -----------------------------------------------------------
-Write-Host "[I] Generating Database Folder." -ForegroundColor Yellow
-New-Item -ItemType Directory -Path $DBFolder -Force
-
-# -----------------------------------------------------------
-# Generate Database File
+# Create the DB
 # -----------------------------------------------------------
 Write-Host "[I] Generating Database File." -ForegroundColor Yellow
-[System.Data.SQLite.SQLiteConnection]::CreateFile($DBFile)
+$DBFile = SQLiteDB.CreateDB
 
 # -----------------------------------------------------------
 # Connect to database
 # -----------------------------------------------------------
 Write-Host "[I] Connecting to newly created database." -ForegroundColor Yellow
-$DBConnectionString = [string]::Format("data source={0}",$DBFile)
-$DBConnection = New-Object System.Data.SQLite.SQLiteConnection
-$DBConnection.ConnectionString = $DBConnectionString
-$DBConnection.open()
+$DBConnection = SQLiteDB.ConnectDB($DBFile)
 
 # -----------------------------------------------------------
 # Create Disks Table
