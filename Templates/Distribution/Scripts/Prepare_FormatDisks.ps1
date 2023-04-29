@@ -13,21 +13,16 @@ using module .\Config_NDKConfig.psm1
 using module .\Database_DataAccess.psm1
 using module ..\Bin\AMD64\sqlite\System.Data.SQLite.dll
 
-
-# -----------------------------------------------------------
-# Load SQLite DLL
-# -----------------------------------------------------------
-[Logging]::Informational("Loading SQLite Assembly.")
-[SQLiteDB]::LoadModule();
-
 # -----------------------------------------------------------
 # Grab details about disks on the system
 # -----------------------------------------------------------
+[Logging]::Informational("Gathering details.")
 $ChosenDisk = Get-Disk -Number ([NDKConfig]::InstallDisk)
 
 # -----------------------------------------------------------
 # Verify disk meets requirements
 # -----------------------------------------------------------
+[Logging]::Informational("Checking storage requirements.")
 
 $diskVerificationStatus = CheckDiskRequirements -DiskDetails $ChosenDisk
 
@@ -40,17 +35,25 @@ if($diskVerificationStatus -ne 0)
 # -----------------------------------------------------------
 # Partition Disk
 # -----------------------------------------------------------
+[Logging]::Informational("Partitioning Disks.")
 $partitionDetails = PartitionDisk -DiskNumber $ChosenDisk.DiskNumber -FirmwareType ([NDKConfig]::FirmwareType)
 
 # -----------------------------------------------------------
 # Format Disks
 # -----------------------------------------------------------
+[Logging]::Informational("Formatting newly created partitions.")
 $volumeDetails = FormatPartitions -PartitionDetails $partitionDetails -FirmwareType ([NDKConfig]::FirmwareType)
 
 # -----------------------------------------------------------
 # Connect to database
 # -----------------------------------------------------------
+[Logging]::Informational("Connecting to database.")
 $DBConnection = [SQLiteDB]::ConnectDB([NDKConfig]::DeployDBFilePath);
+
+# -----------------------------------------------------------
+# Save Data to the database
+# -----------------------------------------------------------
+[Logging]::Informational("Saving partition details.")
 
 # -----------------------------------------------------------
 # Save recovery partition
