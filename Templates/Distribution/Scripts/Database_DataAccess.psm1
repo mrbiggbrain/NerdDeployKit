@@ -221,5 +221,6 @@ class PartitionsTable
         $DBCommand.Parameters.AddWithValue("@Type", $partition.Type);
         $DBCommand.Parameters.AddWithValue("@TargetType", $partition.TargetType);
         $DBCommand.Parameters.AddWithValue("@TargetType", $partition.UniqueId);
+        $DBCommand.ExecuteNonQuery()
     }
 }
