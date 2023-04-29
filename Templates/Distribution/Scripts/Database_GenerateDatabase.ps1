@@ -54,6 +54,5 @@ $DBConnection = [SQLiteDB]::ConnectDB($DBFile);
 # -----------------------------------------------------------
 # Close the DB Connection.
 # -----------------------------------------------------------
-Write-Host "[I] Closing DB connection." -ForegroundColor Blue
 [Logging]::Informational("Closing DB connection.")
 [SQLiteDB]::CloseDB($DBConnection)
