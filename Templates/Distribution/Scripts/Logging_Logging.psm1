@@ -18,5 +18,5 @@ class Logging
 
 class Errors
 {
-    static [string] $FAILED_VERIFICATION_ERROR = "FAILED_VERIFICATION_ERROR"
+    [string] static $FAILED_VERIFICATION_ERROR = "FAILED_VERIFICATION_ERROR"
 }

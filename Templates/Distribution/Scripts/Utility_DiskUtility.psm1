@@ -7,6 +7,7 @@
 # -----------------------------------------------------------
 # Include Librarys
 # -----------------------------------------------------------
+using module .\Config_NDKConfig.psm1
 
 # -----------------------------------------------------------
 # Data Class (Partitions)
@@ -40,12 +41,10 @@ function PartitionDisk
     )
 
     if($FirmwareType -eq "UEFI") { 
-        PartitionDiskUEFI -DiskNumber $DiskNumber
-        return
+        return PartitionDiskUEFI -DiskNumber $DiskNumber   
     }
     elseif($FirmwareType -eq "BIOS") {
-        PartitionDiskBIOS -DiskNumber $DiskNumber
-        return
+        return PartitionDiskBIOS -DiskNumber $DiskNumber
     }
 }
 
@@ -58,9 +57,6 @@ function PartitionDiskUEFI
         [Parameter(Mandatory=$true)][int] $DiskNumber
     )
 
-    # Load Drive Mappings
-    $driveMappings = [DriveLetterMappingConfiguration]::LoadDriveLetterMappingConfiguration()
-
     # Generate a class instance to hold our returned data
     $details = [PartitionDetails]::new()
 
@@ -68,22 +64,22 @@ function PartitionDiskUEFI
     $disk = Get-Disk -Number $DiskNumber
 
     # Determine size of OS drive
-    $osDiskSize = $disk.Size - $disk.AllocatedSize - 1024MB
+    $osDiskSize = $disk.Size - 1024MB
 
     # Clear the Disk
     Clear-Disk -Number $DiskNumber -Removedata -Confirm:$false
 
     # Generate EFI partition
-    $details.SystemPartition = New-Partition -DiskNumber $DiskNumber -Size 499MB -DriveLetter $driveMappings.System
+    $details.SystemPartition = New-Partition -DiskNumber $DiskNumber -Size 499MB -DriveLetter ([NDKConfig]::SystemDriveLetter)
 
     # Generate reserved partition
     $details.ReservedPartition = New-Partition -DiskNumber $DiskNumber -Size 16MB
 
     # Generate OS Partition
-    $details.OSPartition = New-Partition -DiskNumber $DiskNumber -DriveLetter $driveMappings.OS -Size $osDiskSize
+    $details.OSPartition = New-Partition -DiskNumber $DiskNumber -DriveLetter ([NDKConfig]::OSDriveLetter) -Size $osDiskSize
 
     # Generate recovery partition
-    $details.RecoveryPartition = New-Partition -DiskNumber $DiskNumber -UseMaximumSize -DriveLetter $driveMappings.Recovery
+    $details.RecoveryPartition = New-Partition -DiskNumber $DiskNumber -UseMaximumSize -DriveLetter ([NDKConfig]::RecoveryDriveLetter)
 
     # Return details on the partitions
     return $details
@@ -133,15 +129,19 @@ function FormatPartitionsUEFI
     # Generate a new class instance to store results. 
     $volumes = [VolumneDetails]::new()
 
+    $PartitionDetails.RecoveryPartition.DriveLetter
+
     # Recovery 
-    $volumes.RecoveryVolume = $PartitionDetails.RecoveryPartition | Format-Volume -FileSystem NTFS -FileSystemLabel "Recovery"
+    $volumes.RecoveryVolume = $PartitionDetails.RecoveryPartition | Format-Volume -FileSystem NTFS
+    #$volumes.RecoveryVolume = Format-Volume -FileSystem NTFS -FileSystemLabel "Recovery" -DriveLetter ($PartitionDetails.RecoveryPartition.DriveLetter)
+    
 
     # Boot
-    $volumes.SystemVolume = $PartitionDetails.SystemPartition | Format-Volume -FileSystem FAT32 -FileSystemLabel "System"
-
+    $volumes.SystemVolume = $PartitionDetails.SystemPartition | Format-Volume -FileSystem FAT32
+    
     # OS
-    $volumes.OSVolume = $PartitionDetails.OSPartition | Format-Volume -FileSystem NTFS -FileSystemLabel "OS"
-
+    $volumes.OSVolume = $PartitionDetails.OSPartition | Format-Volume -FileSystem NTFS
+    
     # Return results
     return $volumes
 }
@@ -182,10 +182,10 @@ function CheckDiskRequirements
     }
 
     # Check if Disk is Online
-    if($ChosenDisk.OperationalStatus -ne "Online")
-    {
-        $returnCode += 4
-    }
+    # if($ChosenDisk.OperationalStatus -ne "Online")
+    # {
+    #     $returnCode += 4
+    # }
 
     return $returnCode
 }

@@ -3,6 +3,7 @@
 # Nerd Deployment Kit
 # (C) 2023 Nicholas Young
 # -----------------------------------------------------------
+using module ..\Bin\AMD64\sqlite\System.Data.SQLite.dll
 
 # -----------------------------------------------------------
 # Utility class for working with SQLite Databases
@@ -50,6 +51,8 @@ Class SQLiteDB
     # -----------------------------------------------------------
     [string] static CreateDB($DBPath)
     {
+        [SQLiteDB]::LoadModule()
+
         # -----------------------------------------------------------
         # Get proposed database folder
         # -----------------------------------------------------------

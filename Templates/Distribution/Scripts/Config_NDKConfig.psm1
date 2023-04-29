@@ -9,7 +9,10 @@ class NDKConfig
     # -----------------------------------------------------------
     # Partitioning Details
     # -----------------------------------------------------------
-    static [int] $InstallDisk = 0
+    static [int] $InstallDisk = 1
+    static [string] $OSDriveLetter = "W"
+    static [string] $RecoveryDriveLetter = "R"
+    static [string] $SystemDriveLetter = "S"
 
     # -----------------------------------------------------------
     # Firmware Details

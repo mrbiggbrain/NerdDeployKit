@@ -12,6 +12,13 @@ using module .\Logging_Logging.psm1
 using module .\Config_NDKConfig.psm1
 using module .\Database_DataAccess.psm1
 
+
+# -----------------------------------------------------------
+# Load SQLite DLL
+# -----------------------------------------------------------
+[Logging]::Informational("Loading SQLite Assembly.")
+[SQLiteDB]::LoadModule();
+
 # -----------------------------------------------------------
 # Grab details about disks on the system
 # -----------------------------------------------------------
@@ -34,14 +41,32 @@ if($diskVerificationStatus -ne 0)
 # -----------------------------------------------------------
 $partitionDetails = PartitionDisk -DiskNumber $ChosenDisk.DiskNumber -FirmwareType ([NDKConfig]::FirmwareType)
 
+$partitionDetails.RecoveryPartition | Format-List
+
 # -----------------------------------------------------------
 # Format Disks
 # -----------------------------------------------------------
 $volumeDetails = FormatPartitions -PartitionDetails $partitionDetails -FirmwareType ([NDKConfig]::FirmwareType)
 
 # -----------------------------------------------------------
-# Save Deployment State
+# Connect to database
 # -----------------------------------------------------------
-$DBConnection = [SQLiteDB]::ConnectDB($DBFile);
-$Part = [Partition]::new($volumeDetails.RecoveryVolume)
+$DBConnection = [SQLiteDB]::ConnectDB([NDKConfig]::DeployDBFilePath);
+
+# -----------------------------------------------------------
+# Save recovery partition
+# -----------------------------------------------------------
+$Part = [Partition]::new($volumeDetails.RecoveryVolume, "Recovery")
+[PartitionsTable]::AddPartition($DBConnection, $part)
+
+# -----------------------------------------------------------
+# Save OS partition
+# -----------------------------------------------------------
+$Part = [Partition]::new($volumeDetails.OSPartition, "Basic")
+[PartitionsTable]::AddPartition($DBConnection, $part)
+
+# -----------------------------------------------------------
+# Save system partition
+# -----------------------------------------------------------
+$Part = [Partition]::new($volumeDetails.SystemPartition, "System")
 [PartitionsTable]::AddPartition($DBConnection, $part)
