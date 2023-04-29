@@ -10,11 +10,12 @@
 using module ..\Bin\AMD64\sqlite\System.Data.SQLite.dll
 using module .\Database_DataAccess.psm1
 using module .\Config_NDKConfig.psm1
+using module .\Logging_Logging.psm1
 
 # -----------------------------------------------------------
 # Load SQLite DLL
 # -----------------------------------------------------------
-Write-Host "[I] Loading SQLite Assembly." -ForegroundColor Blue
+[Logging]::Informational("Loading SQLite Assembly.")
 [SQLiteDB]::LoadModule();
 
 # -----------------------------------------------------------
@@ -22,36 +23,37 @@ Write-Host "[I] Loading SQLite Assembly." -ForegroundColor Blue
 # -----------------------------------------------------------
 if(Test-Path ([NDKConfig]::DeployDBFilePath))
 {
-    Write-Host "[W] Found existing DB file, removing (Possible unstable state?)" -ForegroundColor DarkYellow
-    #Remove-Item ([NDKConfig]::DeployDBFilePath) -Force
+    [Logging]::Warning("Found existing DB file, removing (Possible unstable state?)")
+    Remove-Item ([NDKConfig]::DeployDBFilePath) -Force
 }
 
 # -----------------------------------------------------------
 # Create the DB
 # -----------------------------------------------------------
-Write-Host "[I] Generating Database File." -ForegroundColor Blue
+[Logging]::Informational("Generating Database File.")
 $DBFile = [SQLiteDB]::CreateDB([NDKConfig]::DeployDBFilePath);
 
 # -----------------------------------------------------------
 # Connect to database
 # -----------------------------------------------------------
-Write-Host "[I] Connecting to newly created database." -ForegroundColor Blue
+[Logging]::Informational("Connecting to newly created database.")
 $DBConnection = [SQLiteDB]::ConnectDB($DBFile);
 
 # -----------------------------------------------------------
 # Create Disks Table
 # -----------------------------------------------------------
-Write-Host "[I] Generating Disks Table" -ForegroundColor Blue
+[Logging]::Informational("Generating Disks Database Table.")
 [DisksTable]::Init($DBConnection)
 
 # -----------------------------------------------------------
 # Create Partitions Table
 # -----------------------------------------------------------
-Write-Host "[I] Generating Partitions Table" -ForegroundColor Blue
+[Logging]::Informational("Generating Partitions Database Table.")
 [PartitionsTable]::Init($DBConnection)
 
 # -----------------------------------------------------------
 # Close the DB Connection.
 # -----------------------------------------------------------
 Write-Host "[I] Closing DB connection." -ForegroundColor Blue
+[Logging]::Informational("Closing DB connection.")
 [SQLiteDB]::CloseDB($DBConnection)

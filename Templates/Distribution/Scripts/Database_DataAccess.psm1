@@ -160,6 +160,43 @@ class DisksTable
 # -----------------------------------------------------------
 # Represents data about partitions
 # -----------------------------------------------------------
+class Partition
+{
+    [int] $DiskNumber
+    [string] $DriveLetter
+    [int] $Size
+    [string] $Type
+    [string] $TargetType
+    [string] $UniqueId
+
+    Partition(
+        [int] $DiskNumber,
+        [string] $DriveLetter,
+        [int] $Size,
+        [string] $Type,
+        [string] $TargetType,
+        [string] $UniqueId
+    )
+    {
+        $this.DiskNumber = $DiskNumber
+        $this.DriveLetter = $DriveLetter
+        $this.Size = $Size
+        $this.Type = $Type
+        $this.TargetType = $TargetType;
+        $this.UniqueId = $UniqueId;
+    }
+
+    Partition([CimInstance] $obj, [string] $TargetType)
+    {
+        $this.DiskNumber = $obj.DiskNumber
+        $this.DriveLetter = $obj.DriveLetter
+        $this.Size = $obj.Size
+        $this.Type = $obj.Type
+        $this.TargetType = $TargetType
+        $this.UniqueId = $obj.UniqueId
+    }
+}
+
 class PartitionsTable
 {
     static Init($DBConnection)
@@ -168,6 +205,18 @@ class PartitionsTable
         [SQLiteDB]::DropTable($DBConnection, "partitions")
 
         # Setup new table if it does not exist. 
-        [SQLiteDB]::ExecuteNonQuery($DBConnection, "create table if not exists partitions (DiskNumber int, DriveLetter varchar(1), Size int, Type varchar(100), TargetType varchar(100));")
+        [SQLiteDB]::ExecuteNonQuery($DBConnection, "create table if not exists partitions (DiskNumber int, DriveLetter varchar(1), Size int, Type varchar(100), TargetType varchar(100)), UniqueId varchar(100);")
+    }
+
+    static AddPartition($DBConnection, [Partition] $partition)
+    {
+        $DBCommand = $DBConnection.CreateCommand()
+        $DBCommand.CommandText = "INSERT INTO partitions (DiskNumber, DriveLetter, Size, Type, TargetType, UniqueId) VALUES (@DiskNumber, @DriveLetter, @Size, @Type, @TargetType, @UniqueId)"
+        $DBCommand.Parameters.AddWithValue("@DiskNumber", $partition.DiskNumber);
+        $DBCommand.Parameters.AddWithValue("@DriveLetter", $partition.DriveLetter);
+        $DBCommand.Parameters.AddWithValue("@Size", $partition.Size);
+        $DBCommand.Parameters.AddWithValue("@Type", $partition.Type);
+        $DBCommand.Parameters.AddWithValue("@TargetType", $partition.TargetType);
+        $DBCommand.Parameters.AddWithValue("@TargetType", $partition.UniqueId);
     }
 }

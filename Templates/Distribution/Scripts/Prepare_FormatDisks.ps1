@@ -7,35 +7,15 @@
 # -----------------------------------------------------------
 # Import Libraries
 # -----------------------------------------------------------
-using module .\Gather_GatherConfiguration.psm1
-using module .\Utility_GenericUtility.psm1
 using module .\Utility_DiskUtility.psm1
-using module .\Scope_Scope.psm1
-
-# -----------------------------------------------------------
-# Generate a Configuration Object
-# -----------------------------------------------------------
-$Configuration = [Configuration]::LoadNDKConfiguration()
-
-# -----------------------------------------------------------
-# Generate a logger to use
-# -----------------------------------------------------------
-$logger = [Logger]::new()
-
-# -----------------------------------------------------------
-# Generate a program scope to use
-# -----------------------------------------------------------
-$pscope = [ProgramScope]::new()
+using module .\Logging_Logging.psm1
+using module .\Config_NDKConfig.psm1
+using module .\Database_DataAccess.psm1
 
 # -----------------------------------------------------------
 # Grab details about disks on the system
 # -----------------------------------------------------------
-$DiskDetails = Get-Disk
-
-# -----------------------------------------------------------
-# Get the correct disk. 
-# -----------------------------------------------------------
-$ChosenDisk = $DiskDetails | Where-Object {$_.Number -eq $Configuration.DriveIndex}
+$ChosenDisk = Get-Disk -Number ([NDKConfig]::InstallDisk)
 
 # -----------------------------------------------------------
 # Verify disk meets requirements
@@ -45,22 +25,23 @@ $diskVerificationStatus = CheckDiskRequirements -DiskDetails $ChosenDisk
 
 if($diskVerificationStatus -ne 0)
 {
-    $logger.WriteError("Disk verification failed with code $($diskVerificationStatus).")
-    $pscope.FailProvision("VERIFY_DISK", $diskVerificationStatus)
+    [Logging]::Error("Disk verification failed with code $($diskVerificationStatus).")
+    throw([Errors]::FAILED_VERIFICATION_ERROR)
 }
 
 # -----------------------------------------------------------
 # Partition Disk
 # -----------------------------------------------------------
-$partitionDetails = PartitionDisk -DiskNumber $ChosenDisk.DiskNumber -FirmwareType $Configuration.FirmwareType
+$partitionDetails = PartitionDisk -DiskNumber $ChosenDisk.DiskNumber -FirmwareType ([NDKConfig]::FirmwareType)
 
 # -----------------------------------------------------------
 # Format Disks
 # -----------------------------------------------------------
-$volumeDetails = FormatPartitions -PartitionDetails $partitionDetails -FirmwareType $Configuration.FirmwareType
+$volumeDetails = FormatPartitions -PartitionDetails $partitionDetails -FirmwareType ([NDKConfig]::FirmwareType)
 
 # -----------------------------------------------------------
 # Save Deployment State
 # -----------------------------------------------------------
-$pscope.SavePartitions($partitionDetails)
-$pscope.SaveVolumes($volumeDetails)
+$DBConnection = [SQLiteDB]::ConnectDB($DBFile);
+$Part = [Partition]::new($volumeDetails.RecoveryVolume)
+[PartitionsTable]::AddPartition($DBConnection, $part)
