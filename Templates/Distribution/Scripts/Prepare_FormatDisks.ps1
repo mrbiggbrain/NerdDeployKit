@@ -11,6 +11,7 @@ using module .\Utility_DiskUtility.psm1
 using module .\Logging_Logging.psm1
 using module .\Config_NDKConfig.psm1
 using module .\Database_DataAccess.psm1
+using module ..\Bin\AMD64\sqlite\System.Data.SQLite.dll
 
 
 # -----------------------------------------------------------
@@ -41,8 +42,6 @@ if($diskVerificationStatus -ne 0)
 # -----------------------------------------------------------
 $partitionDetails = PartitionDisk -DiskNumber $ChosenDisk.DiskNumber -FirmwareType ([NDKConfig]::FirmwareType)
 
-$partitionDetails.RecoveryPartition | Format-List
-
 # -----------------------------------------------------------
 # Format Disks
 # -----------------------------------------------------------
@@ -57,16 +56,25 @@ $DBConnection = [SQLiteDB]::ConnectDB([NDKConfig]::DeployDBFilePath);
 # Save recovery partition
 # -----------------------------------------------------------
 $Part = [Partition]::new($volumeDetails.RecoveryVolume, "Recovery")
+$Part.Type = "Basic"
 [PartitionsTable]::AddPartition($DBConnection, $part)
 
 # -----------------------------------------------------------
 # Save OS partition
 # -----------------------------------------------------------
-$Part = [Partition]::new($volumeDetails.OSPartition, "Basic")
+$Part = [Partition]::new($volumeDetails.OSVolume, "Basic")
+$Part.Type = "Basic"
 [PartitionsTable]::AddPartition($DBConnection, $part)
 
 # -----------------------------------------------------------
 # Save system partition
 # -----------------------------------------------------------
-$Part = [Partition]::new($volumeDetails.SystemPartition, "System")
+$Part = [Partition]::new($volumeDetails.SystemVolume, "System")
+$Part.Type = "Basic"
 [PartitionsTable]::AddPartition($DBConnection, $part)
+
+# -----------------------------------------------------------
+# Close the DB
+# -----------------------------------------------------------
+[Logging]::Informational("Closing DB connection.")
+[SQLiteDB]::CloseDB($DBConnection)

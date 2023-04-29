@@ -165,17 +165,17 @@ class DisksTable
 # -----------------------------------------------------------
 class Partition
 {
-    [int] $DiskNumber
+    [uint64] $DiskNumber
     [string] $DriveLetter
-    [int] $Size
+    [uint64] $Size
     [string] $Type
     [string] $TargetType
     [string] $UniqueId
 
     Partition(
-        [int] $DiskNumber,
+        [uint64] $DiskNumber,
         [string] $DriveLetter,
-        [int] $Size,
+        [uint64] $Size,
         [string] $Type,
         [string] $TargetType,
         [string] $UniqueId
@@ -208,19 +208,18 @@ class PartitionsTable
         [SQLiteDB]::DropTable($DBConnection, "partitions")
 
         # Setup new table if it does not exist. 
-        [SQLiteDB]::ExecuteNonQuery($DBConnection, "create table if not exists partitions (DiskNumber int, DriveLetter varchar(1), Size int, Type varchar(100), TargetType varchar(100)), UniqueId varchar(100);")
+        [SQLiteDB]::ExecuteNonQuery($DBConnection, "create table if not exists partitions (DiskNumber int, DriveLetter varchar(1), Type varchar(100), TargetType varchar(100), UniqueId varchar(100));")
     }
 
     static AddPartition($DBConnection, [Partition] $partition)
     {
         $DBCommand = $DBConnection.CreateCommand()
-        $DBCommand.CommandText = "INSERT INTO partitions (DiskNumber, DriveLetter, Size, Type, TargetType, UniqueId) VALUES (@DiskNumber, @DriveLetter, @Size, @Type, @TargetType, @UniqueId)"
+        $DBCommand.CommandText = "INSERT INTO partitions (DiskNumber, DriveLetter, Type, TargetType, UniqueId) VALUES (@DiskNumber, @DriveLetter, @Type, @TargetType, @UniqueId)"
         $DBCommand.Parameters.AddWithValue("@DiskNumber", $partition.DiskNumber);
         $DBCommand.Parameters.AddWithValue("@DriveLetter", $partition.DriveLetter);
-        $DBCommand.Parameters.AddWithValue("@Size", $partition.Size);
         $DBCommand.Parameters.AddWithValue("@Type", $partition.Type);
         $DBCommand.Parameters.AddWithValue("@TargetType", $partition.TargetType);
-        $DBCommand.Parameters.AddWithValue("@TargetType", $partition.UniqueId);
+        $DBCommand.Parameters.AddWithValue("@UniqueId", $partition.UniqueId);
         $DBCommand.ExecuteNonQuery()
     }
 }

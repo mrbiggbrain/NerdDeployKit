@@ -8,6 +8,7 @@
 # Include Librarys
 # -----------------------------------------------------------
 using module .\Config_NDKConfig.psm1
+using module ..\Bin\AMD64\sqlite\System.Data.SQLite.dll
 
 # -----------------------------------------------------------
 # Data Class (Partitions)
@@ -133,8 +134,6 @@ function FormatPartitionsUEFI
 
     # Recovery 
     $volumes.RecoveryVolume = $PartitionDetails.RecoveryPartition | Format-Volume -FileSystem NTFS
-    #$volumes.RecoveryVolume = Format-Volume -FileSystem NTFS -FileSystemLabel "Recovery" -DriveLetter ($PartitionDetails.RecoveryPartition.DriveLetter)
-    
 
     # Boot
     $volumes.SystemVolume = $PartitionDetails.SystemPartition | Format-Volume -FileSystem FAT32
