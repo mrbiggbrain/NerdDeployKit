@@ -22,3 +22,14 @@ Write-Host "
 -----------------------------------------------------------"
 & $PSScriptRoot\Image_ApplyBCDSettings.ps1
 
+Write-Host "
+-----------------------------------------------------------
+# Inject Drivers
+-----------------------------------------------------------"
+& $PSScriptRoot\Drivers_InjectDrivers.ps1
+
+Write-Host "
+-----------------------------------------------------------
+# Apply Unattended.xml file
+-----------------------------------------------------------"
+& $PSScriptRoot\Image_ApplyAnswerFile.ps1
