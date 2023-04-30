@@ -14,10 +14,10 @@ using module .\Logging_Logging.psm1
 # Determine a few paths
 # -----------------------------------------------------------
 $OfflineWinDir = "$([NDKConfig]::OSDriveLetter):\Windows"
-$RecoveryDrive = "$([NDKConfig]::RecoveryDriveLetter):"
+$SystemDrive = "$([NDKConfig]::SystemDriveLetter):"
 
 # -----------------------------------------------------------
 # Apply BCD Settings
 # -----------------------------------------------------------
-[Logging]::Informational("Applying boot files.")
-bcdboot.exe "$OfflineWinDir" /s "$RecoveryDrive"
+[Logging]::Informational("Applying boot files to system drive.")
+bcdboot.exe "$OfflineWinDir" /s "$SystemDrive"
