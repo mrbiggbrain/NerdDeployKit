@@ -27,3 +27,9 @@ Write-Host "
 # Apply Unattended.xml file
 -----------------------------------------------------------"
 & $PSScriptRoot\Image_ApplyAnswerFile.ps1
+
+Write-Host "
+-----------------------------------------------------------
+# Set proper partition types
+-----------------------------------------------------------"
+& $PSScriptRoot\Prepare_SetPartitionTypes.ps1

@@ -67,8 +67,22 @@ function PartitionDiskUEFI
     # Determine size of OS drive
     $osDiskSize = $disk.Size - 1024MB
 
-    # Clear the Disk
-    Clear-Disk -Number $DiskNumber -Removedata -Confirm:$false
+    # Clear the disk if the partition style is not raw.
+    if($disk.PartitionStyle -ne "RAW")
+    {
+        # Clear the Disk
+        Clear-Disk -Number $DiskNumber -Removedata -Confirm:$false
+    }
+    
+    # Refresh the disk object.
+    $disk = Get-Disk -Number $DiskNumber
+
+    # Initilize disk if it's now RAW after clearing.
+    if($disk.PartitionStyle -eq "RAW")
+    {
+        Write-Host "Init happening"
+        Initialize-Disk -Number $DiskNumber -PartitionStyle GPT
+    }
 
     # Generate EFI partition
     $details.SystemPartition = New-Partition -DiskNumber $DiskNumber -Size 499MB -DriveLetter ([NDKConfig]::SystemDriveLetter)
@@ -169,7 +183,7 @@ function CheckDiskRequirements
     [int] $returnCode = 0
 
     # Check if the disk is a Fixed Disk. 
-    if($DiskDetails.ProvisioningType -ne "Fixed")
+    if(($DiskDetails.ProvisioningType -ne "Fixed") -and ($DiskDetails.ProvisioningType -ne "Thin"))
     {
         $returnCode += 1
     }
