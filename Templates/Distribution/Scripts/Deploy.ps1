@@ -30,6 +30,6 @@ Write-Host "
 
 Write-Host "
 -----------------------------------------------------------
-# Set proper partition types
+# Migrate Resource to New OS Drive
 -----------------------------------------------------------"
-# & $PSScriptRoot\Prepare_SetPartitionTypes.ps1
+& $PSScriptRoot\Image_Migration.ps1 
