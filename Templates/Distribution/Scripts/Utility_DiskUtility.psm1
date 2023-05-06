@@ -7,8 +7,7 @@
 # -----------------------------------------------------------
 # Include Librarys
 # -----------------------------------------------------------
-using module .\Config_NDKConfig.psm1
-using module ..\Bin\AMD64\sqlite\System.Data.SQLite.dll
+
 
 # -----------------------------------------------------------
 # Data Class (Partitions)
@@ -90,16 +89,16 @@ function PartitionDiskUEFI
     }
 
     # Generate EFI partition
-    $details.SystemPartition = New-Partition -DiskNumber $DiskNumber -Size 499MB -DriveLetter ($JsonData.Partitioning.DriveLetters.System) -GptType "{c12a7328-f81f-11d2-ba4b-00a0c93ec93b}"
+    New-Partition -DiskNumber $DiskNumber -Size 499MB -DriveLetter ($JsonData.Partitioning.DriveLetters.System) -GptType "{c12a7328-f81f-11d2-ba4b-00a0c93ec93b}"
 
     # Generate reserved partition
     #$details.ReservedPartition = New-Partition -DiskNumber $DiskNumber -Size 16MB -GptType "{E3C9E316-0B5C-4DB8-817D-F92DF00215AE}"
 
     # Generate OS Partition
-    $details.OSPartition = New-Partition -DiskNumber $DiskNumber -DriveLetter ($JsonData.Partitioning.DriveLetters.OS) -Size $osDiskSize
+    New-Partition -DiskNumber $DiskNumber -DriveLetter ($JsonData.Partitioning.DriveLetters.OS) -Size $osDiskSize
 
     # Generate recovery partition
-    $details.RecoveryPartition = New-Partition -DiskNumber $DiskNumber -UseMaximumSize -DriveLetter ($JsonData.Partitioning.DriveLetters.Recovery) -GptType "{de94bba4-06d1-4d40-a16a-bfd50179d6ac}"
+    New-Partition -DiskNumber $DiskNumber -UseMaximumSize -DriveLetter ($JsonData.Partitioning.DriveLetters.Recovery) -GptType "{de94bba4-06d1-4d40-a16a-bfd50179d6ac}"
 
     # Return details on the partitions
     return

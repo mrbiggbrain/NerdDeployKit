@@ -9,9 +9,6 @@
 # -----------------------------------------------------------
 using module .\Utility_DiskUtility.psm1
 using module .\Logging_Logging.psm1
-using module .\Config_NDKConfig.psm1
-using module .\Database_DataAccess.psm1
-using module ..\Bin\AMD64\sqlite\System.Data.SQLite.dll
 
 # -----------------------------------------------------------
 # Verify disk meets requirements

@@ -9,12 +9,6 @@
 
 Write-Host "
 -----------------------------------------------------------
-# Preparing Deployment Environment
------------------------------------------------------------"
-& $PSScriptRoot\Database_GenerateDatabase.ps1
-
-Write-Host "
------------------------------------------------------------
 # Running Deployment Scripts
 -----------------------------------------------------------"
 & $PSScriptRoot\Deploy.ps1
