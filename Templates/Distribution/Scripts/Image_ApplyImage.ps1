@@ -17,7 +17,12 @@ using module .\Logging_Logging.psm1
 $JsonData = Get-Content $ENV:SystemDrive\NDK\Deploy.json | ConvertFrom-Json
 
 # -----------------------------------------------------------
+# Determine a few paths
+# -----------------------------------------------------------
+$OSDrive = $JsonData.Partitioning.DriveLetters.OS
+
+# -----------------------------------------------------------
 # Write WIM
 # -----------------------------------------------------------
 [Logging]::Informational("Write WIM file to OS drive.")
-Expand-WindowsImage -ImagePath $JsonData.Image.File -Index $JsonData.Image.Index -ApplyPath "$([NDKConfig]::OSDriveLetter):\"
+Expand-WindowsImage -ImagePath $JsonData.Image.File -Index $JsonData.Image.Index -ApplyPath "$($OSDrive):\"

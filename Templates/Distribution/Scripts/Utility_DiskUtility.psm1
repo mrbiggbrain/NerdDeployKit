@@ -36,16 +36,21 @@ class VolumneDetails
 # -----------------------------------------------------------
 function PartitionDisk
 {
-    param(
-        [Parameter(Mandatory=$true)][int] $DiskNumber,
-        [Parameter(Mandatory=$true)][string] $FirmwareType
-    )
+    # -----------------------------------------------------------
+    # Load chosen settings from JSON file
+    # -----------------------------------------------------------
+    #[Logging]::Informational("Loading deployment options.")
+    $JsonData = Get-Content $ENV:SystemDrive\NDK\Deploy.json | ConvertFrom-Json
+    $FirmwareType = $JsonData.Partitioning.FirmwareType
 
     if($FirmwareType -eq "UEFI") { 
-        return PartitionDiskUEFI -DiskNumber $DiskNumber   
+        PartitionDiskUEFI 
     }
     elseif($FirmwareType -eq "BIOS") {
-        return PartitionDiskBIOS -DiskNumber $DiskNumber
+        PartitionDiskBIOS
+    }
+    else {
+        throw "BadPartStyle"
     }
 }
 
@@ -54,12 +59,12 @@ function PartitionDisk
 # -----------------------------------------------------------
 function PartitionDiskUEFI
 {
-    param(
-        [Parameter(Mandatory=$true)][int] $DiskNumber
-    )
-
-    # Generate a class instance to hold our returned data
-    $details = [PartitionDetails]::new()
+    # -----------------------------------------------------------
+    # Load chosen settings from JSON file
+    # -----------------------------------------------------------
+    #[Logging]::Informational("Loading deployment options.")
+    $JsonData = Get-Content $ENV:SystemDrive\NDK\Deploy.json | ConvertFrom-Json
+    $DiskNumber = $JsonData.Partitioning.Disk
 
     # Grab some disk details
     $disk = Get-Disk -Number $DiskNumber
@@ -85,19 +90,19 @@ function PartitionDiskUEFI
     }
 
     # Generate EFI partition
-    $details.SystemPartition = New-Partition -DiskNumber $DiskNumber -Size 499MB -DriveLetter ([NDKConfig]::SystemDriveLetter) -GptType "{c12a7328-f81f-11d2-ba4b-00a0c93ec93b}"
+    $details.SystemPartition = New-Partition -DiskNumber $DiskNumber -Size 499MB -DriveLetter ($JsonData.Partitioning.DriveLetters.System) -GptType "{c12a7328-f81f-11d2-ba4b-00a0c93ec93b}"
 
     # Generate reserved partition
     #$details.ReservedPartition = New-Partition -DiskNumber $DiskNumber -Size 16MB -GptType "{E3C9E316-0B5C-4DB8-817D-F92DF00215AE}"
 
     # Generate OS Partition
-    $details.OSPartition = New-Partition -DiskNumber $DiskNumber -DriveLetter ([NDKConfig]::OSDriveLetter) -Size $osDiskSize
+    $details.OSPartition = New-Partition -DiskNumber $DiskNumber -DriveLetter ($JsonData.Partitioning.DriveLetters.OS) -Size $osDiskSize
 
     # Generate recovery partition
-    $details.RecoveryPartition = New-Partition -DiskNumber $DiskNumber -UseMaximumSize -DriveLetter ([NDKConfig]::RecoveryDriveLetter) -GptType "{de94bba4-06d1-4d40-a16a-bfd50179d6ac}"
+    $details.RecoveryPartition = New-Partition -DiskNumber $DiskNumber -UseMaximumSize -DriveLetter ($JsonData.Partitioning.DriveLetters.Recovery) -GptType "{de94bba4-06d1-4d40-a16a-bfd50179d6ac}"
 
     # Return details on the partitions
-    return $details
+    return
 }
 
 # -----------------------------------------------------------
@@ -105,10 +110,6 @@ function PartitionDiskUEFI
 # -----------------------------------------------------------
 function PartitionDiskBIOS
 {
-    param(
-        [Parameter(Mandatory=$true)][int] $DiskNumber
-    )
-
     throw "NDK Does not currently support deploying to BIOS firmware."
 }
 
@@ -117,18 +118,21 @@ function PartitionDiskBIOS
 # -----------------------------------------------------------
 function FormatPartitions
 {
-    param(
-        [Parameter(Mandatory=$true)][PartitionDetails] $PartitionDetails,
-        [Parameter(Mandatory=$true)][string] $FirmwareType
-    )
+    # -----------------------------------------------------------
+    # Load chosen settings from JSON file
+    # -----------------------------------------------------------
+    #[Logging]::Informational("Loading deployment options.")
+    $JsonData = Get-Content $ENV:SystemDrive\NDK\Deploy.json | ConvertFrom-Json
+    $FirmwareType = $JsonData.Partitioning.FirmwareType
 
     if($FirmwareType -eq "UEFI") { 
-        FormatPartitionsUEFI -PartitionDetails $PartitionDetails 
-        return
+        FormatPartitionsUEFI
     }
     elseif($FirmwareType -eq "BIOS") {
-        FormatPartitionsBIOS -PartitionDetails $PartitionDetails
-        return
+        FormatPartitionsBIOS
+    }
+    else {
+        Throw "BadPartStyle"
     }
 }
 
@@ -137,26 +141,20 @@ function FormatPartitions
 # -----------------------------------------------------------
 function FormatPartitionsUEFI
 {
-    param(
-        [Parameter(Mandatory=$true)][PartitionDetails] $PartitionDetails
-    ) 
-
-    # Generate a new class instance to store results. 
-    $volumes = [VolumneDetails]::new()
-
-    $PartitionDetails.RecoveryPartition.DriveLetter
+    # -----------------------------------------------------------
+    # Load chosen settings from JSON file
+    # -----------------------------------------------------------
+    #[Logging]::Informational("Loading deployment options.")
+    $JsonData = Get-Content $ENV:SystemDrive\NDK\Deploy.json | ConvertFrom-Json
 
     # Recovery 
-    $volumes.RecoveryVolume = $PartitionDetails.RecoveryPartition | Format-Volume -FileSystem NTFS
+    Get-Partition -DriveLetter ($JsonData.Partitioning.DriveLetters.Recovery) | Format-Volume -FileSystem NTFS
 
-    # Boot
-    $volumes.SystemVolume = $PartitionDetails.SystemPartition | Format-Volume -FileSystem FAT32
+    # System
+    Get-Partition -DriveLetter ($JsonData.Partitioning.DriveLetters.System) | Format-Volume -FileSystem FAT32
     
     # OS
-    $volumes.OSVolume = $PartitionDetails.OSPartition | Format-Volume -FileSystem NTFS
-    
-    # Return results
-    return $volumes
+    Get-Partition -DriveLetter ($JsonData.Partitioning.DriveLetters.OS) | Format-Volume -FileSystem NTFS
 }
 
 # -----------------------------------------------------------
@@ -164,10 +162,6 @@ function FormatPartitionsUEFI
 # -----------------------------------------------------------
 function FormatPartitionsBIOS
 {
-    param(
-        [Parameter(Mandatory=$true)][PartitionDetails] $PartitionDetails
-    )
-
     throw "NDK Does not currently support deploying to BIOS firmware."
 }
 
@@ -176,9 +170,13 @@ function FormatPartitionsBIOS
 # -----------------------------------------------------------
 function CheckDiskRequirements
 {
-    param(
-        [Parameter(Mandatory=$true)] $DiskDetails
-    )
+    # -----------------------------------------------------------
+    # Load chosen settings from JSON file
+    # -----------------------------------------------------------
+    #[Logging]::Informational("Loading deployment options.")
+    $JsonData = Get-Content $ENV:SystemDrive\NDK\Deploy.json | ConvertFrom-Json
+
+    $DiskDetails = Get-Disk -Number ($JsonData.Partitioning.Disk)
 
     [int] $returnCode = 0
 

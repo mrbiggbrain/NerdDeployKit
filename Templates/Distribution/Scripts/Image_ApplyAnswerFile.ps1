@@ -11,12 +11,18 @@ using module .\Config_NDKConfig.psm1
 using module .\Logging_Logging.psm1
 
 # -----------------------------------------------------------
+# Load chosen settings from JSON file
+# -----------------------------------------------------------
+[Logging]::Informational("Loading deployment options.")
+$JsonData = Get-Content $ENV:SystemDrive\NDK\Deploy.json | ConvertFrom-Json
+
+# -----------------------------------------------------------
 # Determine the correct paths
 # -----------------------------------------------------------
 [Logging]::Informational("Determine Paths.")
 $ParentDirectory = Split-Path -Path $PSScriptRoot -Parent
 $UnattendFile = "$ParentDirectory\Unattend\Unattend_x64.xml"
-$OSDrive = [NDKConfig]::OSDriveLetter
+$OSDrive = $JsonData.Partitioning.DriveLetters.OS
 $DestinationFolder = "$($OSDrive):\Windows\Panther"
 $DestinationFile = "$($DestinationFolder)\Unattend.xml"
 

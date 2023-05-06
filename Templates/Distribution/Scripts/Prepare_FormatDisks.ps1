@@ -14,17 +14,11 @@ using module .\Database_DataAccess.psm1
 using module ..\Bin\AMD64\sqlite\System.Data.SQLite.dll
 
 # -----------------------------------------------------------
-# Grab details about disks on the system
-# -----------------------------------------------------------
-[Logging]::Informational("Gathering details.")
-$ChosenDisk = Get-Disk -Number ([NDKConfig]::InstallDisk)
-
-# -----------------------------------------------------------
 # Verify disk meets requirements
 # -----------------------------------------------------------
 [Logging]::Informational("Checking storage requirements.")
 
-$diskVerificationStatus = CheckDiskRequirements -DiskDetails $ChosenDisk
+$diskVerificationStatus = CheckDiskRequirements
 
 if($diskVerificationStatus -ne 0)
 {
@@ -36,10 +30,10 @@ if($diskVerificationStatus -ne 0)
 # Partition Disk
 # -----------------------------------------------------------
 [Logging]::Informational("Partitioning Disks.")
-$partitionDetails = PartitionDisk -DiskNumber $ChosenDisk.DiskNumber -FirmwareType ([NDKConfig]::FirmwareType)
+PartitionDisk
 
 # -----------------------------------------------------------
 # Format Disks
 # -----------------------------------------------------------
 [Logging]::Informational("Formatting newly created partitions.")
-$volumeDetails = FormatPartitions -PartitionDetails $partitionDetails -FirmwareType ([NDKConfig]::FirmwareType)
+FormatPartitions
