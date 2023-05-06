@@ -32,4 +32,4 @@ Write-Host "
 -----------------------------------------------------------
 # Set proper partition types
 -----------------------------------------------------------"
-& $PSScriptRoot\Prepare_SetPartitionTypes.ps1
+# & $PSScriptRoot\Prepare_SetPartitionTypes.ps1
