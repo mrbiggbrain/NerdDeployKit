@@ -16,6 +16,12 @@ using module .\Logging_Logging.psm1
 $JsonData = Get-Content $ENV:SystemDrive\NDK\Deploy.json | ConvertFrom-Json
 
 # -----------------------------------------------------------
+# Encrypt the password
+# -----------------------------------------------------------
+$PTPassword = $JsonData.Credentials.Administrator.Password
+$PasswordHash = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($PTPassword))
+
+# -----------------------------------------------------------
 # Determine the correct paths
 # -----------------------------------------------------------
 [Logging]::Informational("Determine Paths.")
@@ -38,5 +44,60 @@ if(-not (Test-Path $DestinationFolder))
 # -----------------------------------------------------------
 # Copy the Unattended.xml file.
 # -----------------------------------------------------------
-[Logging]::Informational("Copy unattend.xml")
-Copy-Item -LiteralPath $UnattendFile -Destination $DestinationFile
+#[Logging]::Informational("Copy unattend.xml")
+#Copy-Item -LiteralPath $UnattendFile -Destination $DestinationFile
+
+# -----------------------------------------------------------
+# Load XML File
+# -----------------------------------------------------------
+[Logging]::Informational("Loading unattended.xml template")
+$xml = [xml](Get-Content -Path $UnattendFile)
+
+
+
+# -----------------------------------------------------------
+# Deployment Stages
+# -----------------------------------------------------------
+$OOBE = $XML.unattend.settings | Where-Object {$_.Pass -eq "oobeSystem"}
+$Specialize = $XML.unattend.settings | Where-Object {$_.Pass -eq "specialize"}
+
+# -----------------------------------------------------------
+# OOBE COmponents
+# -----------------------------------------------------------
+$ShellSetup_OOBE = $OOBE.component | Where-Object {$_.name -eq "Microsoft-Windows-Shell-Setup"}
+
+# -----------------------------------------------------------
+# Specialize COmponents
+# -----------------------------------------------------------
+$ShellSetup_Specialize = $Specialize.component | Where-Object {$_.name -eq "Microsoft-Windows-Shell-Setup"}
+
+# -----------------------------------------------------------
+# Modify Administrator Password
+# -----------------------------------------------------------
+[Logging]::Informational("Injecting administrator password")
+$ShellSetup_OOBE.UserAccounts.AdministratorPassword.Value = $PasswordHash
+$ShellSetup_OOBE.UserAccounts.AdministratorPassword.PlainText = "true"
+
+
+# -----------------------------------------------------------
+# Modify Autologon
+# -----------------------------------------------------------
+[Logging]::Informational("Injecting Autologon")
+$ShellSetup_OOBE.AutoLogon.Password.Value = $PasswordHash
+$ShellSetup_OOBE.AutoLogon.Password.PlainText = "true"
+
+# -----------------------------------------------------------
+# Modify TimeZone
+# -----------------------------------------------------------
+$ShellSetup_Specialize.TimeZone = $JsonData.TimeZone
+
+# -----------------------------------------------------------
+# Modify Product Key
+# -----------------------------------------------------------
+$ShellSetup_Specialize.ProductKey = $JsonData.ProductKey
+
+# -----------------------------------------------------------
+# Copy to Destination
+# -----------------------------------------------------------
+[Logging]::Informational("Saving unattend.xml")
+$XML.Save($DestinationFile)
