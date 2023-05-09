@@ -30,6 +30,6 @@ Write-Host "
 
 Write-Host "
 -----------------------------------------------------------
-# Migrate Resource to New OS Drive
+# Migrate Resources to New OS Drive
 -----------------------------------------------------------"
 & $PSScriptRoot\Image_Migration.ps1 
